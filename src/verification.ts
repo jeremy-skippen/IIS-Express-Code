@@ -2,109 +2,68 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import * as settingsHelpers from './settings';
 
-interface verification {
-    isValidOS: boolean;
-    folderIsOpen: boolean;
-    iisExists: boolean;
-    programPath: string;
+export interface VerificationResult
+{
+	CanRun: boolean;
+	ConfigTemplatePath: string;
+	ExecutablePath: string;
+	HasWorkspace: boolean;
+	IsValidOS: boolean;
 }
 
+export function VerifyIISExpressInstallation():VerificationResult
+{
+	let results: VerificationResult = {
+		CanRun: false,
+		ConfigTemplatePath: null,
+		ExecutablePath: null,
+		HasWorkspace: false,
+		IsValidOS: false,
+	};
 
-export function checkForProblems():verification{
-
-    //Give some default values
-    let results:verification = {
-        isValidOS: false,
-        folderIsOpen: false,
-        iisExists:false,
-        programPath: ''
-    };
-    
-    // *******************************************
-    // Check if we are on Windows and not OSX
-    // *******************************************
-    
-	//Type = 'WINDOWS_NT'
-	let operatingSystem = os.type();
-	
-	//Uppercase string to ensure we match correctly
-	operatingSystem = operatingSystem.toUpperCase();
-	
-	//New ES2015 includes as opposed to indexOf()
-	if(!operatingSystem.includes('WINDOWS_NT')){
+	// Check if we are on Windows and not OSX or Linux.
+	if (!os.type().toUpperCase().includes('WINDOWS_NT')) {
 		vscode.window.showErrorMessage('You can only run this extension on Windows.');
-		
-        results.isValidOS = false;
-	} 
-    else {
-        
-        //Is Valid & Passes - we are on Windows
-        results.isValidOS = true;
-    }
-    
-    
-    // *******************************************
-    // Checks that VS Code is open with a folder 
-    // *******************************************
-    
-    //Get the path of the folder that is open in VS Code
-    const folderPath = vscode.workspace.rootPath;
-    
-    
-    //Check if we are in a folder/workspace & NOT just have a single file open
-	if(!folderPath){
+		results.IsValidOS = false;
+	} else {
+		results.IsValidOS = true;
+	}
+
+	// Check if we are in a folder/workspace and not just have a single file open.
+	if (!vscode.workspace.rootPath) {
 		vscode.window.showErrorMessage('Please open a workspace directory first.');
-		
-        //We are not a folder
-        results.folderIsOpen = false;
-	} 
-    else {
-        results.folderIsOpen = true;
-    }
-    
-    
-    
-    
-    // *******************************************
-    // Verify IIS Express excutable Exists
-    // *******************************************
- 
-    //Let's check for two folder locations for IISExpress
-	//32bit machines - 'C:\Program Files\IIS Express\iisexpress.exe'
-	//64bit machines - 'C:\Program Files (x86)\IIS Express\iisexpress.exe'
-	
-	//'C:\Program Files (x86)'
-	let programFilesPath = process.env.ProgramFiles;
-	
-	//Try to find IISExpress excutable - build up path to EXE
-	programFilesPath = path.join(programFilesPath, 'IIS Express', 'iisexpress.exe');
-	
-    try {
-        //Check if we can find the file path (get stat info on it)
-        let fileCheck = fs.statSync(programFilesPath);
-    
-        results.iisExists = true;
-        results.programPath = programFilesPath;
-    }
-    catch (err) {
-       	//ENOENT - File or folder not found
-		if(err && err.code.toUpperCase() === 'ENOENT'){
-			vscode.window.showErrorMessage(`We did not find a copy of IISExpress.exe at ${programFilesPath}`);
-        }
-		else if(err){
-			//Some other error - maybe file permission or ...?
-			vscode.window.showErrorMessage(`There was an error trying to find IISExpress.exe at ${programFilesPath} due to ${err.message}`);
+		results.HasWorkspace = false;
+	} else {
+		results.HasWorkspace = true;
+	}
+
+	// Verify IIS Express excutable exists.
+	results.ExecutablePath = path.join(process.env.ProgramFiles, 'IIS Express', 'iisexpress.exe')
+	try {
+		// Check if we can find the file path (get stat info on it).
+		fs.statSync(results.ExecutablePath);
+	} catch (err) {
+		// ENOENT - File or folder not found
+		if (err && err.code.toUpperCase() === 'ENOENT') {
+			vscode.window.showErrorMessage(`We did not find a copy of IISExpress.exe at ${results.ExecutablePath}`);
+		} else if (err) {
+			vscode.window.showErrorMessage(
+				`There was an error trying to find IISExpress.exe at ${results.ExecutablePath} due to ${err.message}`
+			);
 		}
-       
-       
-        results.iisExists = false;
-        results.programPath = null;
-    }
-    
-    
-    //Return an object back from verifications
-    return results;
-    
+
+		results.ExecutablePath = null;
+	}
+
+	// Find the configuration template.
+	results.ConfigTemplatePath = path.join(process.env.ProgramFiles, 'IIS Express', 'AppServer', 'applicationhost.config')
+	try {
+		fs.statSync(results.ConfigTemplatePath);
+	} catch (err) {
+		results.ConfigTemplatePath = null;
+	}
+
+	results.CanRun = results.IsValidOS && results.HasWorkspace && results.ExecutablePath !== null;
+	return results;
 }

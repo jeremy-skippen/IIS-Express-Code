@@ -1,157 +1,213 @@
+import * as child_process from 'child_process';
+import * as fs from 'fs';
+import * as iconv from 'iconv-lite';
+import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
-import * as process from 'child_process';
-import * as settingsHelpers from './settings';
-var iconv=require('iconv-lite')
+import { XmlCommentNode, XmlDocument } from 'xmldoc';
+import { CLRVersion, GetSettings, PipelineMode } from './settings';
+import { VerificationResult } from './verification';
 
-export interface IExpressArguments {
-	path?: string;
-	port?: number;
-	clr?: settingsHelpers.clrVersion;
+interface IISAppPoolDefinition
+{
+	name?: string;
+	managedRuntimeVersion?: string;
+	managedPipelineMode?: string;
+	CLRConfigFile?: string;
+	autoStart?: string;
 }
 
-// TODO:
-// * Tidy up code - remove events we do not need
+export interface IISExpressArguments
+{
+	clr?: CLRVersion;
+	path?: string;
+	port?: number;
+	pipeline?: PipelineMode;
+}
 
-export class IIS {
-	private _iisProcess: process.ChildProcess;
+export class IISExpress
+{
+	private _iisProcess: child_process.ChildProcess;
 	private _iisPath: string;
-	private _args: IExpressArguments;
+	private _configPath: string;
+	private _iisArgs: IISExpressArguments;
 	private _output: vscode.OutputChannel;
 	private _statusbar: vscode.StatusBarItem;
 	private _statusMessage: string;
+	private _verification: VerificationResult;
 
-	constructor(iisPath: string, args: IExpressArguments){
+	constructor(iisPath: string, verification: VerificationResult)
+	{
 		this._iisPath = iisPath;
-		this._args = args;
+		this._iisArgs = {};
+		this._verification = verification;
 	}
-	
-	public startWebsite(): process.ChildProcess{
-		//Need to run this command
-		//iisexpress /path:app-path [/port:port-number] [/clr:clr-version] [/systray:boolean]
-		//isexpress /path:c:\myapp\ /port:5005
-		
-		//Verify process not already running, so if we have a PID (process ID) it's running
-		//TODO: NOT WORKING?! - So it re-runs & moans that port in use
-		if(this._iisProcess != undefined){
-			//Display error message that it's already running
+
+	public StartServer(): child_process.ChildProcess
+	{
+		if (this._iisProcess !== undefined) {
 			vscode.window.showErrorMessage('IISExpress is already running');
-			
-			//Stop the method/function from running
 			return;
 		}
-        
-		//settings
-		var settings = settingsHelpers.getSettings();
 
-        //Get IIS Port Number from config file
-        this._args.port = settings.port;
-		
-		//Folder to run as the arg
-		this._args.path = settings.path ? settings.path : vscode.workspace.rootPath;
+		var settings = GetSettings();
 
-		//CLR version, yes there are still people on 3.5
-		this._args.clr = settings.clr;	
+		this._iisArgs.clr = settings.clr? settings.clr : CLRVersion.v40;
+		this._iisArgs.path = settings.path? settings.path : vscode.workspace.rootPath;
+		this._iisArgs.port = settings.port;
+		this._iisArgs.pipeline = settings.pipeline? settings.pipeline : PipelineMode.Integrated;
 
-		//This is the magic that runs the IISExpress cmd
-		this._iisProcess = process.spawn(this._iisPath, [`-path:${this._args.path}`,`-port:${this._args.port}`,`-clr:${this._args.clr}`]);
-		console.log(`stdout: Command with Params ${this._iisPath} ${[`-path:${this._args.path}`,`-port:${this._args.port}`,`-clr:${this._args.clr}`].join(' ')}`);
-		//Create output channel & show it
+		// Spawn the IISExpress cmd
+		var argv = this.GetCommandLineOptions();
+		this._iisProcess = child_process.spawn(this._iisPath, argv);
+		console.log(`stdout: Command with Params ${this._iisPath} ${argv.join(' ')}`);
+
+		// Create output channel & show it
 		this._output = this._output || vscode.window.createOutputChannel('IIS Express');
 		this._output.show(vscode.ViewColumn.Three);
-		
-		//Create Statusbar item & show it
+
+		// Create Statusbar item & show it
 		this._statusbar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-		
-		//Set props on statusbar & show it
-		this._statusbar.text = `$(browser) http://localhost:${this._args.port}`;
-		this._statusMessage = `Running folder '${this._args.path}' as a website on http://localhost:${this._args.port} on CLR: ${this._args.clr}`;
+		this._statusbar.text = `$(browser) http://localhost:${this._iisArgs.port}`;
+		this._statusMessage = `Running folder '${this._iisArgs.path}' as a website on http://localhost:${this._iisArgs.port} on CLR: ${this._iisArgs.clr}`;
 		this._statusbar.tooltip = this._statusMessage;
 		this._statusbar.command = 'extension.iis-express.open';
 		this._statusbar.show();
-		
-        //Open browser
-		this.openWebsite();
-		
-		//Attach all the events & functions to iisProcess
-		this._iisProcess.stdout.on('data', (data) =>{
-			var data=this.decode2gbk(data);
-			this._output.appendLine(data);
-			console.log(`stdout: ${data}`);
+
+		this.OpenBrowser();
+
+		// Attach all the events & functions to iisProcess
+		this._iisProcess.stdout.on('data', (data) => {
+			var dataDecoded = this.decode2gbk(data);
+			this._output.appendLine(dataDecoded);
+			console.log(`stdout: ${dataDecoded}`);
 		});
-		
 		this._iisProcess.stderr.on('data', (data) => {
-			var data=this.decode2gbk(data);
-			this._output.appendLine(`stderr: ${data}`);
-			console.log(`stderr: ${data}`);
+			var dataDecoded = this.decode2gbk(data);
+			this._output.appendLine(`stderr: ${dataDecoded}`);
+			console.log(`stderr: ${dataDecoded}`);
 		});
-		
-		this._iisProcess.on('error', (err:Error) => {
-			var message=this.decode2gbk(err.message);
+		this._iisProcess.on('error', (err: Error) => {
+			var message = this.decode2gbk(err.message);
 			this._output.appendLine(`ERROR: ${message}`);
 			console.log(`ERROR: ${message}`);
 		});
-		
-		
-		//Display Message
+
 		vscode.window.showInformationMessage(this._statusMessage);
 	}
-	
-	public stopWebsite(){
-		
-		//If we do not have an iisProcess running
-		if(!this._iisProcess){
+
+	public StopServer()
+	{
+		if (!this._iisProcess) {
 			vscode.window.showErrorMessage('No website currently running');
-			
-			//Stop function from running
 			return;
 		}
-		
-		//Kill the process
+
+		// Kill the process
 		this._iisProcess.kill('SIGINT');
-        this._iisProcess = undefined;
-		
-		//Clear the output log
+		this._iisProcess = undefined;
+		if (this._configPath) {
+			fs.unlinkSync(this._configPath);
+			this._configPath = null;
+		}
+
+		// Clear the output log
 		this._output.clear();
-        this._output.hide();
-        this._output.dispose();
-		
-		//Remove the statusbar item
+		this._output.hide();
+		this._output.dispose();
+
+		// Remove the statusbar item
 		this._statusbar.hide();
 		this._statusbar.dispose();
-		
 	}
 
-	public openWebsite(){
-
-		//If we do not have an iisProcess running
-		if(!this._iisProcess){
+	public OpenBrowser()
+	{
+		if (!this._iisProcess) {
 			vscode.window.showErrorMessage('No website currently running');
-			
-			//Stop function from running
 			return;
 		}
 
-		//Uses the 'start' command & url to open default browser
-		let browser = process.exec(`start http://localhost:${this._args.port}`);
+		child_process.exec(`start http://localhost:${this._iisArgs.port}`);
 	}
 
-	public restartSite(){
-		//If we do not have an iisProcess/website running
-		if(!this._iisProcess){
-			//Then just do a start site...
-			this.startWebsite();
+	public RestartServer()
+	{
+		if (!this._iisProcess) {
+			this.StartServer();
+		} else {
+			this.StopServer();
+			this.StartServer();
 		}
-		else {
-			//It's already running so stop it first then, start it
-			this.stopWebsite();
-			this.startWebsite();
+	}
+
+	private decode2gbk(data)
+	{
+		return iconv.decode(new Buffer(data), 'gbk');
+	}
+
+	private GetCommandLineOptions()
+	{
+		if (this._verification.ConfigTemplatePath !== null) {
+			try {
+				var config = fs.readFileSync(this._verification.ConfigTemplatePath, 'utf8');
+				var doc = new XmlDocument(config);
+
+				var appPool = doc.childNamed('system.applicationHost')
+					.childNamed('applicationPools')
+					.childWithAttribute('name', 'IISExpressAppPool');
+				appPool.attr['managedRuntimeVersion'] = this._iisArgs.clr;
+				appPool.attr['managedPipelineMode'] = this._iisArgs.pipeline;
+
+				var site = doc.childNamed('system.applicationHost')
+					.childNamed('sites')
+					.childNamed('site');
+
+				var application = site.childNamed('application');
+				application.attr['applicationPool'] = 'IISExpressAppPool';
+
+				var virtualDirectory = application.childNamed('virtualDirectory');
+				virtualDirectory.attr['physicalPath'] = this._iisArgs.path;
+
+				var binding = site.childNamed('bindings')
+					.childWithAttribute('protocol', 'http');
+				binding.attr['bindingInformation'] = `:${this._iisArgs.port}:localhost`;
+
+				// TODO: make this configurable somehow
+				var asp = doc.childNamed('system.webServer')
+					.childNamed('asp');
+				asp.attr['enableParentPaths'] = 'true';
+
+				this._configPath = path.join(os.tmpdir(), 'applicationhost' + datestamp() + '.config');
+				fs.writeFileSync(
+					this._configPath,
+					'<?xml version="1.0" encoding="UTF-8"?>\n' + doc.toString(),
+					{encoding: 'utf8'}
+				);
+
+				return [`/config:${this._configPath}`];
+			} catch (e) {
+				console.log(e);
+			}
 		}
 
+		return [
+			`/path:${this._iisArgs.path}`,
+			`/port:${this._iisArgs.port}`,
+			`/clr:${this._iisArgs.clr}`,
+		];
 	}
-	
-    private decode2gbk(data) {
-		var buffer = new Buffer(data);
- 		return iconv.decode(buffer, 'gbk');
-	}
-    
+}
+
+function datestamp()
+{
+	var now = new Date();
+
+	return '' + now.getFullYear() +
+		('0' + (now.getMonth() + 1)).slice(-2) +
+		('0' + now.getDate()).slice(-2) +
+		('0' + now.getHours()).slice(-2) +
+		('0' + now.getMinutes()).slice(-2) +
+		('0' + now.getSeconds()).slice(-2) +
+		('00' + now.getMilliseconds()).slice(-3);
 }

@@ -4,20 +4,18 @@ This extension gives you the power to run a folder open in Visual Studio code as
 ## Install
 Open the command pallete & type **ext install** then search for **IIS Express**
 
-![Install](images/iis-express-install.gif)
-
 # Usage
 ## Available commands
-* **IIS Express: Run Website** - Start or stop the current folder run as a website
-
-![Usage](images/iis-express-usage.gif)
+* **IIS Express: Start Server** - Ctrl+F5
+* **IIS Express: Stop Server** - Shift+F5
+* **IIS Express: Restart Server** - Ctrl+Shift+F5
 
 # Features
 * Auto opens folder in browser
-* Super simple way from the command pallete to start & stop the website
-* See ouput from the IIS Express command line directly in Visual Studio 
+* Super simple way to start & stop the website using keyboard shortcuts
+* See ouput from the IIS Express command line directly in Visual Studio
 
-# Requirements 
+# Requirements
 * Windows Machine (Sorry not for Linux & OSX)
 * IIS Express installed
 

@@ -1,81 +1,47 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as iis from './IISExpress';
-import * as verify from './verification';
+import { IISExpress } from './IISExpress';
+import { VerificationResult, VerifyIISExpressInstallation } from './verification';
 
+export function activate(context: vscode.ExtensionContext)
+{
+	let verification: VerificationResult = VerifyIISExpressInstallation();
+	let proc = new IISExpress(verification.ExecutablePath, verification);
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-    
-    //Begin checks of OS, IISExpress location etc..
-    let verification = verify.checkForProblems();
+	let startServer = vscode.commands.registerCommand('extension.iis-express.start', () => {
+		if (!verification.CanRun) {
+			return;
+		}
 
-    //IISExpress command line arguments
-    let args: iis.IExpressArguments = {
-    };
-
-    //Run IISExpress Class Contructor
-    let iisProc = new iis.IIS(verification.programPath, args);
-    
-
-	//Registering a command so we can assign a direct keybinding to it (without opening quick launch)
-	var startSite = vscode.commands.registerCommand('extension.iis-express.start',() => {
- 		
-		 //Stop extension from running if we did not pass checks
-        if(!verification || !verification.isValidOS || !verification.folderIsOpen || !verification.iisExists){
-            //Stop the extension from running
-            return;
-        }
-
-		//Start Website...
-		iisProc.startWebsite();
+		proc.StartServer();
 	});
 
-	//Registering a command so we can assign a direct keybinding to it (without opening quick launch)
-	var stopSite = vscode.commands.registerCommand('extension.iis-express.stop',() => {
- 		
-		 //Stop extension from running if we did not pass checks
-        if(!verification || !verification.isValidOS || !verification.folderIsOpen || !verification.iisExists){
-            //Stop the extension from running
-            return;
-        }
+	let stopServer = vscode.commands.registerCommand('extension.iis-express.stop', () => {
+		if (!verification.CanRun) {
+			return;
+		}
 
-		//Stop Website...
-		iisProc.stopWebsite();
+		proc.StopServer();
 	});
 
-	//Registering a command so we can assign a direct keybinding to it (without opening quick launch)
-	var openSite = vscode.commands.registerCommand('extension.iis-express.open',() => {
- 		
-		 //Stop extension from running if we did not pass checks
-        if(!verification || !verification.isValidOS || !verification.folderIsOpen || !verification.iisExists){
-            //Stop the extension from running
-            return;
-        }
+	let openBrowser = vscode.commands.registerCommand('extension.iis-express.open', () => {
+		if (!verification.CanRun) {
+			return;
+		}
 
-		//Open site in browser - this will need to check if site is running first...
-		iisProc.openWebsite();
+		proc.OpenBrowser();
 	});
 
-    //Registering a command so we can assign a direct keybinding to it (without opening quick launch)
-	var restartSite = vscode.commands.registerCommand('extension.iis-express.restart',() => {
- 		
-		 //Stop extension from running if we did not pass checks
-        if(!verification || !verification.isValidOS || !verification.folderIsOpen || !verification.iisExists){
-            //Stop the extension from running
-            return;
-        }
+	let restartServer = vscode.commands.registerCommand('extension.iis-express.restart', () => {
+		if (!verification.CanRun) {
+			return;
+		}
 
-		//Open site in browser - this will need to check if site is running first...
-		iisProc.restartSite();
+		proc.RestartServer();
 	});
 
-	//Push the commands
-	context.subscriptions.push(startSite, stopSite, openSite, restartSite);
+	context.subscriptions.push(startServer, stopServer, openBrowser, restartServer);
 }
 
-//this method is called when your extension is deactivated
-export function deactivate() {
+export function deactivate()
+{
 }

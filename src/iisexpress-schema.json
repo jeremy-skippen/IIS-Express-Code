@@ -4,23 +4,27 @@
 
 	"type": "object",
 
-	 "properties": {
-         "port": {
-             "type": "integer",
-             "description": "The port number you wish to use for IIS Express",
-             "minimum": 1024,
-             "maximum": 44399
-        },
-        "path": {
-            "type": "string",
-            "description": "This property is optional & allows you to set a path to the folder or subfolder as the root of your site/project for IIS Express to run"
-        },
-        "clr":{
-            "type": "string",
-            "description": "This property is optional & allows you to set AppPool CLR version, 2.0 vs 4.0"
-        }
-    },
-    "required": [
-        "port"
-    ]
+	"properties": {
+		"clr":{
+			"type": "string",
+			"description": "This property is optional & allows you to set AppPool CLR version, 2.0 vs 4.0"
+		},
+		"path": {
+			"type": "string",
+			"description": "This property is optional & allows you to set a path to the folder or subfolder as the root of your site/project for IIS Express to run"
+		},
+		"port": {
+			"type": "integer",
+			"description": "The port number you wish to use for IIS Express",
+			"minimum": 1024,
+			"maximum": 44399
+		},
+		"pipeline":{
+			"type": "string",
+			"description": "This property is optional & allows you to set managed pipeline mode, Classic vs Integrated"
+		}
+	},
+	"required": [
+		"port"
+	]
 }
