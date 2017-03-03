@@ -1,6 +1,6 @@
 {
-	"name": "iis-express",
-	"displayName": "IIS Express",
+	"name": "iis-express-mod",
+	"displayName": "IIS Express (Modified)",
 	"description": "This allows you to run the current folder as a website in IIS Express",
 	"version": "0.1.0",
 	"publisher": "jeremy-skippen",
@@ -30,38 +30,38 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.iis-express.start",
-		"onCommand:extension.iis-express.stop",
-		"onCommand:extension.iis-express.open",
-		"onCommand:extension.iis-express.restart"
+		"onCommand:extension.iis-express-mod.start",
+		"onCommand:extension.iis-express-mod.stop",
+		"onCommand:extension.iis-express-mod.open",
+		"onCommand:extension.iis-express-mod.restart"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.iis-express.start",
+				"command": "extension.iis-express-mod.start",
 				"title": "IIS Express: Start Website"
 			},
 			{
-				"command": "extension.iis-express.stop",
+				"command": "extension.iis-express-mod.stop",
 				"title": "IIS Express: Stop Website"
 			},
 			{
-				"command": "extension.iis-express.restart",
+				"command": "extension.iis-express-mod.restart",
 				"title": "IIS Express: Restart Website"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "extension.iis-express.start",
+				"command": "extension.iis-express-mod.start",
 				"key": "ctrl+f5"
 			},
 			{
-				"command": "extension.iis-express.stop",
+				"command": "extension.iis-express-mod.stop",
 				"key": "shift+f5"
 			},
 			{
-				"command": "extension.iis-express.restart",
+				"command": "extension.iis-express-mod.restart",
 				"key": "ctrl+shift+f5"
 			}
 		],
