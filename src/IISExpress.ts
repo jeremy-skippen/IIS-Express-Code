@@ -165,7 +165,7 @@ export class IISExpress
 				this._configPath = path.join(os.tmpdir(), 'applicationhost' + datestamp() + '.config');
 				fs.writeFileSync(
 					this._configPath,
-					'<?xml version="1.0" encoding="UTF-8"?>\n' + doc.toString(),
+					'<?xml version="1.0" encoding="UTF-8"?>\n' + doc.toString({compressed:true}),
 					{encoding: 'utf8'}
 				);
 

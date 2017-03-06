@@ -2,7 +2,7 @@
 This extension gives you the power to run a folder open in Visual Studio code as a website using IIS Express.
 
 ## Install
-Open the command pallete & type **ext install** then search for **IIS Express**
+Open the command pallete & type **ext install** then search for **IIS Express (Modified)**
 
 # Usage
 ## Available commands
@@ -21,6 +21,12 @@ Open the command pallete & type **ext install** then search for **IIS Express**
 
 
 # Changelog
+## Version 0.1.0
+* **New:** The CLR version can now be selected (`'v2.0'` or `'v4.0'`)
+* **New:** The pipeline mode can now be selected (`'Classic'` or `'Integrated'`)
+* **New:** Various classic ASP settings can now be specified
+* **New:** `.vscode/iisexpress.json` is now validated against the schema
+
 ## Version 0.0.6
 * **New:** Restart site option
 * **New:** Keyboard shortcuts to start (Ctrl+F5), stop (Shift+F5) & restart site (Ctrl+Shift+F5)

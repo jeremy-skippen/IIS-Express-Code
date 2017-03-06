@@ -73,8 +73,6 @@ export function GetSettings(): IISExpressSettings
 		},
 	};
 
-	console.log('DIR: ' + __dirname);
-
 	// Checks that iisexpress.json exist
 	let vscodePath = vscode.workspace.rootPath + '\\.vscode';
 	let settingsPath = vscodePath + '\\iisexpress.json';

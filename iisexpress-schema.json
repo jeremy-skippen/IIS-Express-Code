@@ -5,25 +5,25 @@
 	"properties": {
 		"clr":{
 			"enum": ["v2.0", "v4.0"],
-			"description": "This property is optional & allows you to set AppPool CLR version, 2.0 vs 4.0"
+			"description": "Specifies the CLR version to be used by the application pool."
 		},
 		"path": {
 			"type": "string",
-			"description": "This property is optional & allows you to set a path to the folder or subfolder as the root of your site/project for IIS Express to run"
+			"description": "Specifies the physical path of the virtual directory."
 		},
 		"port": {
 			"type": "integer",
-			"description": "The port number you wish to use for IIS Express",
+			"description": "Specifies the local port to bind IIS Express to.",
 			"minimum": 1024,
 			"maximum": 44399
 		},
 		"pipeline":{
 			"enum": ["Classic", "Integrated"],
-			"description": "This property is optional & allows you to set managed pipeline mode, Classic vs Integrated"
+			"description": "Specifies the request-processing mode that is used to process requests for managed content."
 		},
 		"asp": {
 			"type": "object",
-			"description": "",
+			"description": "Specifies configuration settings for an ASP application.",
 			"properties": {
 				"appAllowClientDebug": {
 					"type": "boolean",
