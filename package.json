@@ -68,7 +68,7 @@
 		"jsonValidation": [
 			{
 				"fileMatch": "/.vscode/iisexpress.json",
-				"url": "https://raw.githubusercontent.com/jeremy-skippen/IIS-Express-Code/master/src/iisexpress-schema.json"
+				"url": "https://raw.githubusercontent.com/jeremy-skippen/IIS-Express-Code/master/iisexpress-schema.json"
 			}
 		]
 	},
@@ -87,6 +87,7 @@
 	"dependencies": {
 		"iconv-lite": "^0.4.13",
 		"jsonfile": "^2.2.3",
+		"jsonschema": "^1.1.1",
 		"xmldoc": "^1.0.0"
 	}
 }

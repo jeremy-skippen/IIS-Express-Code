@@ -5,32 +5,16 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { XmlCommentNode, XmlDocument } from 'xmldoc';
-import { CLRVersion, GetSettings, PipelineMode } from './settings';
+import { GetSettings, IISExpressSettings } from './settings';
 import { VerificationResult } from './verification';
 
-interface IISAppPoolDefinition
-{
-	name?: string;
-	managedRuntimeVersion?: string;
-	managedPipelineMode?: string;
-	CLRConfigFile?: string;
-	autoStart?: string;
-}
-
-export interface IISExpressArguments
-{
-	clr?: CLRVersion;
-	path?: string;
-	port?: number;
-	pipeline?: PipelineMode;
-}
 
 export class IISExpress
 {
 	private _iisProcess: child_process.ChildProcess;
 	private _iisPath: string;
 	private _configPath: string;
-	private _iisArgs: IISExpressArguments;
+	private _iisArgs: IISExpressSettings;
 	private _output: vscode.OutputChannel;
 	private _statusbar: vscode.StatusBarItem;
 	private _statusMessage: string;
@@ -39,7 +23,6 @@ export class IISExpress
 	constructor(iisPath: string, verification: VerificationResult)
 	{
 		this._iisPath = iisPath;
-		this._iisArgs = {};
 		this._verification = verification;
 	}
 
@@ -50,12 +33,7 @@ export class IISExpress
 			return;
 		}
 
-		var settings = GetSettings();
-
-		this._iisArgs.clr = settings.clr? settings.clr : CLRVersion.v40;
-		this._iisArgs.path = settings.path? settings.path : vscode.workspace.rootPath;
-		this._iisArgs.port = settings.port;
-		this._iisArgs.pipeline = settings.pipeline? settings.pipeline : PipelineMode.Integrated;
+		this._iisArgs = GetSettings();
 
 		// Spawn the IISExpress cmd
 		var argv = this.GetCommandLineOptions();
@@ -69,9 +47,13 @@ export class IISExpress
 		// Create Statusbar item & show it
 		this._statusbar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 		this._statusbar.text = `$(browser) http://localhost:${this._iisArgs.port}`;
-		this._statusMessage = `Running folder '${this._iisArgs.path}' as a website on http://localhost:${this._iisArgs.port} on CLR: ${this._iisArgs.clr}`;
+		this._statusMessage =
+			`Running folder '${this._iisArgs.path}' as a website ` +
+			`on http://localhost:${this._iisArgs.port}/ ` +
+			`on CLR: ${this._iisArgs.clr} ` +
+			`using the ${this._iisArgs.pipeline} Pipeline`;
 		this._statusbar.tooltip = this._statusMessage;
-		this._statusbar.command = 'extension.iis-express.open';
+		this._statusbar.command = 'extension.iis-express-mod.open';
 		this._statusbar.show();
 
 		this.OpenBrowser();
@@ -148,6 +130,7 @@ export class IISExpress
 
 	private GetCommandLineOptions()
 	{
+		var args = this._iisArgs;
 		if (this._verification.ConfigTemplatePath !== null) {
 			try {
 				var config = fs.readFileSync(this._verification.ConfigTemplatePath, 'utf8');
@@ -156,8 +139,8 @@ export class IISExpress
 				var appPool = doc.childNamed('system.applicationHost')
 					.childNamed('applicationPools')
 					.childWithAttribute('name', 'IISExpressAppPool');
-				appPool.attr['managedRuntimeVersion'] = this._iisArgs.clr;
-				appPool.attr['managedPipelineMode'] = this._iisArgs.pipeline;
+				appPool.attr['managedRuntimeVersion'] = args.clr;
+				appPool.attr['managedPipelineMode'] = args.pipeline;
 
 				var site = doc.childNamed('system.applicationHost')
 					.childNamed('sites')
@@ -167,16 +150,17 @@ export class IISExpress
 				application.attr['applicationPool'] = 'IISExpressAppPool';
 
 				var virtualDirectory = application.childNamed('virtualDirectory');
-				virtualDirectory.attr['physicalPath'] = this._iisArgs.path;
+				virtualDirectory.attr['physicalPath'] = args.path;
 
 				var binding = site.childNamed('bindings')
 					.childWithAttribute('protocol', 'http');
-				binding.attr['bindingInformation'] = `:${this._iisArgs.port}:localhost`;
+				binding.attr['bindingInformation'] = `:${args.port}:localhost`;
 
-				// TODO: make this configurable somehow
 				var asp = doc.childNamed('system.webServer')
 					.childNamed('asp');
-				asp.attr['enableParentPaths'] = 'true';
+				Object.keys(args.asp).forEach(function (k) {
+					asp.attr[k] = '' + args.asp[k];
+				});
 
 				this._configPath = path.join(os.tmpdir(), 'applicationhost' + datestamp() + '.config');
 				fs.writeFileSync(

@@ -1,0 +1,106 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "JSON schema for VS Code IIS Express configuration file",
+	"type": "object",
+	"properties": {
+		"clr":{
+			"enum": ["v2.0", "v4.0"],
+			"description": "This property is optional & allows you to set AppPool CLR version, 2.0 vs 4.0"
+		},
+		"path": {
+			"type": "string",
+			"description": "This property is optional & allows you to set a path to the folder or subfolder as the root of your site/project for IIS Express to run"
+		},
+		"port": {
+			"type": "integer",
+			"description": "The port number you wish to use for IIS Express",
+			"minimum": 1024,
+			"maximum": 44399
+		},
+		"pipeline":{
+			"enum": ["Classic", "Integrated"],
+			"description": "This property is optional & allows you to set managed pipeline mode, Classic vs Integrated"
+		},
+		"asp": {
+			"type": "object",
+			"description": "",
+			"properties": {
+				"appAllowClientDebug": {
+					"type": "boolean",
+					"description": "Specifies whether client-side debugging is enabled."
+				},
+				"appAllowDebugging": {
+					"type": "boolean",
+					"description": "Specifies whether server-side debugging is enabled."
+				},
+				"bufferingOn": {
+					"type": "boolean",
+					"description": "Specifies whether buffering of ASP application output is enabled."
+				},
+				"calcLineNumber": {
+					"type": "boolean",
+					"description": "Specifies whether ASP calculates and stores the line number of each executed line of code in order to provide the number in an error report."
+				},
+				"codePage": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 2147483647,
+					"description": "Specifies the default character set for an ASP application. This value is an integer in the range from 0 to 2147483647. For example, the value 1252 sets the default character set to a Latin character set used in American English and many European alphabets."
+				},
+				"enableApplicationRestart": {
+					"type": "boolean",
+					"description": "Specifies whether ASP applications are automatically restarted whenever a configuration setting is changed."
+				},
+				"enableAspHtmlFallback": {
+					"type": "boolean",
+					"description": "Specifies whether a .htm file with the same name as the requested .asp file, if it exists, will be sent to the client instead of the .asp file. This will occur in the event that the request is rejected due to a full request queue."
+				},
+				"enableChunkedEncoding": {
+					"type": "boolean",
+					"description": "Specifies whether HTTP 1.1 chunked transfer encoding is enabled."
+				},
+				"enableParentPaths": {
+					"type": "boolean",
+					"description": "Specifies whether ASP pages allow paths relative to the current directory or above the current directory."
+				},
+				"errorsToNTLog": {
+					"type": "boolean",
+					"description": "Specifies whether logging of ASP errors to the Windows Event Log is enabled."
+				},
+				"exceptionCatchEnable": {
+					"type": "boolean",
+					"description": "Specifies whether COM component exception trapping is enabled. If set to false, the Microsoft Script Debugger tool does not catch exceptions sent by the component that you are debugging."
+				},
+				"lcid": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 2147483647,
+					"description": "Specifies the default locale identifier for an ASP application. This value is an integer in the range from 0 to 2147483647."
+				},
+				"logErrorRequests": {
+					"type": "boolean",
+					"description": "Specifies whether ASP errors are written to the client browser and the IIS logs by default."
+				},
+				"runOnEndAnonymously": {
+					"type": "boolean",
+					"description": "Specifies whether SessionOnEnd and ApplicationOnEnd global ASP functions are run as the anonymous user."
+				},
+				"scriptErrorMessage": {
+					"type": "string",
+					"description": "Specifies the error message that will be sent to the browser when specific debugging errors are not sent to the client."
+				},
+				"scriptErrorSentToBrowser": {
+					"type": "boolean",
+					"description": "Specifies whether the writing of debugging specifics to the client browser is enabled."
+				},
+				"scriptLanguage": {
+					"enum": ["JScript", "VBScript"],
+					"description": "Specifies the default script language for all ASP applications running on the Web server."
+				}
+			}
+		}
+	},
+	"required": [
+		"port"
+	]
+}

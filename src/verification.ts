@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 
+
 export interface VerificationResult
 {
 	CanRun: boolean;
@@ -11,6 +12,7 @@ export interface VerificationResult
 	HasWorkspace: boolean;
 	IsValidOS: boolean;
 }
+
 
 export function VerifyIISExpressInstallation():VerificationResult
 {

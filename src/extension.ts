@@ -2,12 +2,13 @@ import * as vscode from 'vscode';
 import { IISExpress } from './IISExpress';
 import { VerificationResult, VerifyIISExpressInstallation } from './verification';
 
+
 export function activate(context: vscode.ExtensionContext)
 {
 	let verification: VerificationResult = VerifyIISExpressInstallation();
 	let proc = new IISExpress(verification.ExecutablePath, verification);
 
-	let startServer = vscode.commands.registerCommand('extension.iis-express.start', () => {
+	let startServer = vscode.commands.registerCommand('extension.iis-express-mod.start', () => {
 		if (!verification.CanRun) {
 			return;
 		}
@@ -15,7 +16,7 @@ export function activate(context: vscode.ExtensionContext)
 		proc.StartServer();
 	});
 
-	let stopServer = vscode.commands.registerCommand('extension.iis-express.stop', () => {
+	let stopServer = vscode.commands.registerCommand('extension.iis-express-mod.stop', () => {
 		if (!verification.CanRun) {
 			return;
 		}
@@ -23,7 +24,7 @@ export function activate(context: vscode.ExtensionContext)
 		proc.StopServer();
 	});
 
-	let openBrowser = vscode.commands.registerCommand('extension.iis-express.open', () => {
+	let openBrowser = vscode.commands.registerCommand('extension.iis-express-mod.open', () => {
 		if (!verification.CanRun) {
 			return;
 		}
@@ -31,7 +32,7 @@ export function activate(context: vscode.ExtensionContext)
 		proc.OpenBrowser();
 	});
 
-	let restartServer = vscode.commands.registerCommand('extension.iis-express.restart', () => {
+	let restartServer = vscode.commands.registerCommand('extension.iis-express-mod.restart', () => {
 		if (!verification.CanRun) {
 			return;
 		}
@@ -41,6 +42,7 @@ export function activate(context: vscode.ExtensionContext)
 
 	context.subscriptions.push(startServer, stopServer, openBrowser, restartServer);
 }
+
 
 export function deactivate()
 {
